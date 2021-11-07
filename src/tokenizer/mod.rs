@@ -35,6 +35,89 @@ impl<'a> Iterator for WordIterator<'a> {
     }
 }
 
+#[cfg(feature = "tantivy")]
+pub use tantivy_tokenizer::KyTea;
+
+#[cfg(feature = "tantivy")]
+mod tantivy_tokenizer {
+    use tantivy::tokenizer::Token;
+    use tantivy::tokenizer::Tokenizer;
+    use tantivy::tokenizer::{BoxTokenStream, TokenStream};
+
+    use super::{PoS, Surface, WordIterator};
+
+    use std::iter::Enumerate;
+
+    #[derive(Debug, Clone)]
+    pub struct KyTea;
+
+    impl Tokenizer for KyTea {
+        fn token_stream<'a>(&self, text: &'a str) -> BoxTokenStream<'a> {
+            KyTeaStream::from(text).into()
+        }
+    }
+
+    struct KyTeaStream<'a> {
+        original: &'a str,
+        word_it: Enumerate<WordIterator<'a>>,
+        token: Token,
+    }
+
+    impl<'a> KyTeaStream<'a> {
+        fn from(text: &'a str) -> Self {
+            KyTeaStream {
+                original: text,
+                word_it: WordIterator::from_lines(text).enumerate(),
+                token: Token::default(),
+            }
+        }
+    }
+
+    impl<'a> TokenStream for KyTeaStream<'a> {
+        fn advance(&mut self) -> bool {
+            if let Some((i, (surface, pos))) = self.word_it.next() {
+                self.token = to_token(self.original, surface, pos, i);
+                true
+            } else {
+                false
+            }
+        }
+
+        fn token(&self) -> &Token {
+            &self.token
+        }
+
+        fn token_mut(&mut self) -> &mut Token {
+            &mut self.token
+        }
+    }
+
+    fn to_token<'a>(
+        original: &'a str,
+        Surface(surface): Surface<'a>,
+        pos: Option<PoS>,
+        position: usize,
+    ) -> Token {
+        // SAFETY: `original` and `surface` are both parts of the same text, i.e. the `original`.
+        let offset_from = unsafe { surface.as_ptr().offset_from(original.as_ptr()) } as usize;
+        let offset_to = offset_from + surface.len();
+        let text = if let Some(pos) = pos {
+            let mut word = format!("{}/", surface);
+            word.push_str(pos.into());
+            word
+        } else {
+            String::from(surface)
+        };
+        Token {
+            offset_from,
+            offset_to,
+            position,
+            text,
+            position_length: 1,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

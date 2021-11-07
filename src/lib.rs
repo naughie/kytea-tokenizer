@@ -11,6 +11,9 @@ mod tokenizer;
 pub use tokenizer::Surface;
 pub use tokenizer::WordIterator;
 
+#[cfg(feature = "tantivy")]
+pub use tokenizer::KyTea as KyTeaTokenizer;
+
 use tokenizer::{Word, Words};
 
 pub fn strip(out: impl AsRef<str>) -> String {
