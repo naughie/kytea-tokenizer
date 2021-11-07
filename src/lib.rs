@@ -5,6 +5,7 @@ pub use kytea::run_cmd;
 
 mod pos;
 pub use pos::PoS;
+pub use pos::PosIterator;
 
 mod tokenizer;
 pub use tokenizer::Surface;

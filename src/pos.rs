@@ -37,11 +37,16 @@ impl PoS {
         surface.push_str(self.into());
     }
 
+    #[inline]
+    pub fn iter() -> PosIterator {
+        PosIterator::new()
+    }
+
     pub fn repeat<F, T>(f: F) -> impl Iterator<Item = T>
     where
         F: Fn(Self) -> T,
     {
-        PosIterator::first().map(f)
+        PosIterator::new().map(f)
     }
 
     fn next_pos(self) -> Option<Self> {
@@ -77,11 +82,18 @@ pub struct PosIterator {
     current: Option<PoS>,
 }
 
-impl PosIterator {
-    fn first() -> Self {
+impl Default for PosIterator {
+    fn default() -> Self {
         Self {
             current: Some(PoS::名詞),
         }
+    }
+}
+
+impl PosIterator {
+    #[inline]
+    pub fn new() -> Self {
+        Default::default()
     }
 }
 
