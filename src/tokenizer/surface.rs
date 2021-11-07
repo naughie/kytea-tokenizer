@@ -15,3 +15,10 @@ impl<'a, 'b> PartialEq<&'b str> for Surface<'a> {
         self.0 == other
     }
 }
+
+impl<'a> From<Surface<'a>> for String {
+    #[inline]
+    fn from(Surface(s): Surface) -> Self {
+        Self::from(s)
+    }
+}
