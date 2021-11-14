@@ -29,6 +29,14 @@ pub enum PoS {
     言いよどみ,
     英単語,
     UNK,
+    None,
+}
+
+impl Default for PoS {
+    #[inline]
+    fn default() -> Self {
+        Self::None
+    }
 }
 
 impl PoS {
@@ -73,7 +81,8 @@ impl PoS {
             空白 => Some(言いよどみ),
             言いよどみ => Some(英単語),
             英単語 => Some(UNK),
-            UNK => None,
+            UNK => Some(None),
+            None => Option::None,
         }
     }
 }

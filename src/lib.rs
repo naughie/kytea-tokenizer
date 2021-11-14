@@ -30,6 +30,6 @@ pub fn strip(out: impl AsRef<str>) -> String {
     stripped
 }
 
-pub fn get_surface_and_pos(s: &str) -> (Surface<'_>, Option<PoS>) {
+pub fn get_surface_and_pos(s: &str) -> (Surface<'_>, PoS) {
     Word::from(s).surface_and_pos()
 }

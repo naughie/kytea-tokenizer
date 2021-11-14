@@ -57,7 +57,7 @@ impl<'a> Word<'a> {
         (first, eow)
     }
 
-    pub fn surface_and_pos(&self) -> (Surface<'a>, Option<PoS>) {
+    pub fn surface_and_pos(&self) -> (Surface<'a>, PoS) {
         let (first, eow) = self.find_end_of_surface_and_pos();
         let surface = Surface(&self.inner[..first]);
         let pos = if first == self.inner.len() {
@@ -66,6 +66,7 @@ impl<'a> Word<'a> {
             Some(&self.inner[(first + 1)..eow])
         };
         let pos = pos.and_then(|pos| pos.parse().ok());
+        let pos = pos.unwrap_or_default();
         (surface, pos)
     }
 }
@@ -98,7 +99,7 @@ mod test {
         assert_pushed_word_eq("吾\\\\\\/輩/名詞/", "吾\\\\\\/輩/名詞");
     }
 
-    fn assert_word_eq(word: &str, expected_surface: &str, expected_pos: Option<PoS>) {
+    fn assert_word_eq(word: &str, expected_surface: &str, expected_pos: PoS) {
         let (surface, pos) = Word::from(word).surface_and_pos();
         assert_eq!(surface, expected_surface);
         assert_eq!(pos, expected_pos);
@@ -106,12 +107,12 @@ mod test {
 
     #[test]
     fn test_get_surface_and_pos() {
-        assert_word_eq("", "", None);
-        assert_word_eq("吾輩", "吾輩", None);
-        assert_word_eq("吾輩/", "吾輩", None);
-        assert_word_eq("吾輩/名詞", "吾輩", Some(PoS::名詞));
-        assert_word_eq("/名詞", "", Some(PoS::名詞));
-        assert_word_eq("吾輩/名詞/", "吾輩", Some(PoS::名詞));
-        assert_word_eq("吾輩/IllegalPoS", "吾輩", None);
+        assert_word_eq("", "", PoS::None);
+        assert_word_eq("吾輩", "吾輩", PoS::None);
+        assert_word_eq("吾輩/", "吾輩", PoS::None);
+        assert_word_eq("吾輩/名詞", "吾輩", PoS::名詞);
+        assert_word_eq("/名詞", "", PoS::名詞);
+        assert_word_eq("吾輩/名詞/", "吾輩", PoS::名詞);
+        assert_word_eq("吾輩/IllegalPoS", "吾輩", PoS::None);
     }
 }

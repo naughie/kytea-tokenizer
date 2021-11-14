@@ -28,7 +28,7 @@ impl<'a> WordIterator<'a> {
 }
 
 impl<'a> Iterator for WordIterator<'a> {
-    type Item = (Surface<'a>, Option<PoS>);
+    type Item = (Surface<'a>, PoS);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.word_it.next().map(|word| word.surface_and_pos())
@@ -95,13 +95,13 @@ mod tantivy_tokenizer {
     fn to_token<'a>(
         original: &'a str,
         Surface(surface): Surface<'a>,
-        pos: Option<PoS>,
+        pos: PoS,
         position: usize,
     ) -> Token {
         // SAFETY: `original` and `surface` are both parts of the same text, i.e. the `original`.
         let offset_from = unsafe { surface.as_ptr().offset_from(original.as_ptr()) } as usize;
         let offset_to = offset_from + surface.len();
-        let text = if let Some(pos) = pos {
+        let text = if pos != PoS::None {
             let mut word = format!("{}/", surface);
             word.push_str(pos.into());
             word
@@ -123,9 +123,9 @@ mod test {
     use super::*;
 
     fn assert_surface_and_pos(
-        res: Option<(Surface<'_>, Option<PoS>)>,
+        res: Option<(Surface<'_>, PoS)>,
         expected_surface: &str,
-        expected_pos: Option<PoS>,
+        expected_pos: PoS,
     ) {
         assert_eq!(res, Some((Surface(expected_surface), expected_pos)));
     }
@@ -134,10 +134,10 @@ mod test {
     fn word_iterator() {
         let words = "\na/名詞\tb/形容詞\nc/d\n\ne/UNK\n";
         let mut it = WordIterator::from_lines(words);
-        assert_surface_and_pos(it.next(), "a", Some(PoS::名詞));
-        assert_surface_and_pos(it.next(), "b", Some(PoS::形容詞));
-        assert_surface_and_pos(it.next(), "c", None);
-        assert_surface_and_pos(it.next(), "e", Some(PoS::UNK));
+        assert_surface_and_pos(it.next(), "a", PoS::名詞);
+        assert_surface_and_pos(it.next(), "b", PoS::形容詞);
+        assert_surface_and_pos(it.next(), "c", PoS::None);
+        assert_surface_and_pos(it.next(), "e", PoS::UNK);
         assert!(it.next().is_none());
     }
 }
