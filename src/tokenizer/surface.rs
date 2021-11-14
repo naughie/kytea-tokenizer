@@ -1,6 +1,6 @@
 use super::Word;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Surface<'a>(pub &'a str);
 
 impl<'a> Surface<'a> {
@@ -20,5 +20,21 @@ impl<'a> From<Surface<'a>> for String {
     #[inline]
     fn from(Surface(s): Surface) -> Self {
         Self::from(s)
+    }
+}
+
+impl AsRef<str> for Surface<'_> {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        self.0
+    }
+}
+
+impl std::ops::Deref for Surface<'_> {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
+        self.0
     }
 }
