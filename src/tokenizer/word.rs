@@ -3,7 +3,7 @@ use crate::PoS;
 
 use super::Surface;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Word<'a> {
     pub inner: &'a str,
 }
@@ -15,12 +15,12 @@ impl<'a> From<&'a str> for Word<'a> {
 }
 
 impl<'a> Word<'a> {
-    pub fn is_ascii_whitespace(&self) -> bool {
+    pub fn is_ascii_whitespace(self) -> bool {
         let inner = self.inner.as_bytes();
         !inner.is_empty() && inner[0] == b' ' || inner[0] == ESCAPE && inner[1] == DELIM
     }
 
-    pub fn pushed_to(&self, s: &mut String) {
+    pub fn pushed_to(self, s: &mut String) {
         if self.inner.is_empty() {
             return;
         }
@@ -31,7 +31,7 @@ impl<'a> Word<'a> {
         }
     }
 
-    pub fn find_next_slash(&self, start: usize) -> usize {
+    pub fn find_next_slash(self, start: usize) -> usize {
         let mut prev_char = 0u8;
         for (i, &c) in self.inner[start..].as_bytes().iter().enumerate() {
             if c == b'/' && prev_char != ESCAPE {
@@ -47,7 +47,7 @@ impl<'a> Word<'a> {
         self.inner.len()
     }
 
-    pub fn find_end_of_surface_and_pos(&self) -> (usize, usize) {
+    pub fn find_end_of_surface_and_pos(self) -> (usize, usize) {
         let first = self.find_next_slash(0);
         let eow = if first == self.inner.len() {
             first
@@ -57,7 +57,7 @@ impl<'a> Word<'a> {
         (first, eow)
     }
 
-    pub fn surface_and_pos(&self) -> (Surface<'a>, PoS) {
+    pub fn surface_and_pos(self) -> (Surface<'a>, PoS) {
         let (first, eow) = self.find_end_of_surface_and_pos();
         let surface = Surface(&self.inner[..first]);
         let pos = if first == self.inner.len() {
