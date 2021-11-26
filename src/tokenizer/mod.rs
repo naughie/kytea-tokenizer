@@ -31,7 +31,13 @@ impl<'a> Iterator for WordIterator<'a> {
     type Item = (Surface<'a>, PoS);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.word_it.next().map(|word| word.surface_and_pos())
+        self.word_it.next().map(Word::surface_and_pos)
+    }
+}
+
+impl<'a> DoubleEndedIterator for WordIterator<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.word_it.next_back().map(Word::surface_and_pos)
     }
 }
 
