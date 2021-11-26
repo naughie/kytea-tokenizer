@@ -3,7 +3,7 @@ use crate::kytea::{DELIM, ESCAPE};
 
 use std::num::NonZeroUsize;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Words<'a> {
     inner: &'a str,
 }
@@ -44,12 +44,12 @@ impl<'a> From<&'a str> for Words<'a> {
 
 impl Words<'_> {
     #[inline]
-    fn len(&self) -> usize {
+    fn len(self) -> usize {
         self.inner.len()
     }
 
     #[inline]
-    fn is_empty(&self) -> bool {
+    fn is_empty(self) -> bool {
         self.inner.is_empty()
     }
 
