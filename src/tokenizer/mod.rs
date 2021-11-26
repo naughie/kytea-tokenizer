@@ -35,6 +35,12 @@ impl<'a> Iterator for WordIterator<'a> {
     }
 }
 
+impl<'a> DoubleEndedIterator for WordIterator<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.word_it.next_back().map(Word::surface_and_pos)
+    }
+}
+
 #[cfg(feature = "tantivy")]
 pub use tantivy_tokenizer::KyTea;
 
