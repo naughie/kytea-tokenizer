@@ -15,6 +15,7 @@ use std::str::Lines;
 type WordsFrom<'a> = fn(&'a str) -> Words<'a>;
 type FlattenWords<'a> = FlatMap<Lines<'a>, Words<'a>, WordsFrom<'a>>;
 
+#[derive(Debug, Clone)]
 pub struct WordIterator<'a> {
     word_it: FlattenWords<'a>,
 }
