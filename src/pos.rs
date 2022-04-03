@@ -3,9 +3,23 @@ use serde::{Deserialize, Serialize};
 
 use strum::{Display, EnumString, IntoStaticStr};
 
+use num_derive::FromPrimitive;
+
 #[derive(
-    Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash, EnumString, Display, IntoStaticStr,
+    Debug,
+    PartialEq,
+    Eq,
+    Clone,
+    Copy,
+    PartialOrd,
+    Ord,
+    Hash,
+    EnumString,
+    Display,
+    IntoStaticStr,
+    FromPrimitive,
 )]
+#[repr(u8)]
 #[cfg_attr(feature = "json", derive(Serialize, Deserialize))]
 pub enum PoS {
     名詞,
@@ -40,6 +54,17 @@ impl Default for PoS {
 }
 
 impl PoS {
+    #[inline]
+    pub fn from_prim(n: u8) -> Self {
+        use num_traits::FromPrimitive;
+        <Self as FromPrimitive>::from_u8(n).unwrap_or(Self::None)
+    }
+
+    #[inline]
+    pub fn to_prim(self) -> u8 {
+        self as u8
+    }
+
     pub fn append_to(self, surface: &mut String) {
         surface.push('/');
         surface.push_str(self.into());
