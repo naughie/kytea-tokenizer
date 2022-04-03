@@ -1,7 +1,7 @@
 #[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};
 
-use strum::{Display, EnumString, IntoStaticStr};
+use strum::{Display, EnumCount, EnumString, IntoStaticStr};
 
 use num_derive::FromPrimitive;
 
@@ -17,6 +17,7 @@ use num_derive::FromPrimitive;
     EnumString,
     Display,
     IntoStaticStr,
+    EnumCount,
     FromPrimitive,
 )]
 #[repr(u8)]
@@ -54,6 +55,11 @@ impl Default for PoS {
 }
 
 impl PoS {
+    #[inline]
+    pub const fn count() -> usize {
+        <Self as EnumCount>::COUNT
+    }
+
     #[inline]
     pub fn from_prim(n: u8) -> Self {
         use num_traits::FromPrimitive;
