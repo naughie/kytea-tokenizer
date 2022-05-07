@@ -4,8 +4,23 @@ use super::Word;
 pub struct Surface<'a>(pub &'a str);
 
 impl<'a> Surface<'a> {
-    pub fn is_ascii_whitespace(&self) -> bool {
+    pub fn is_ascii_whitespace(self) -> bool {
         Word::from(self.0).is_ascii_whitespace()
+    }
+
+    #[inline]
+    pub const fn as_ptr(self) -> *const u8 {
+        self.0.as_ptr()
+    }
+
+    #[inline]
+    pub const fn as_bytes(self) -> &'a [u8] {
+        self.0.as_bytes()
+    }
+
+    #[inline]
+    pub const fn as_str(self) -> &'a str {
+        self.0
     }
 }
 
