@@ -1,3 +1,5 @@
+use crate::tokenizer::Tags;
+
 #[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};
 
@@ -146,6 +148,16 @@ impl Iterator for PosIterator {
             Some(pos)
         } else {
             None
+        }
+    }
+}
+
+impl<'a> Tags<'a> for PoS {
+    fn from_tags<I: Iterator<Item = &'a str>>(tags: &mut I) -> Self {
+        if let Some(tag) = tags.next() {
+            tag.parse().unwrap_or(Self::None)
+        } else {
+            Self::None
         }
     }
 }

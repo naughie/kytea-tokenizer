@@ -1,4 +1,3 @@
-use super::Word;
 use crate::kytea::{DELIM, ESCAPE};
 
 use std::num::NonZeroUsize;
@@ -9,7 +8,7 @@ pub struct Words<'a> {
 }
 
 impl<'a> Iterator for Words<'a> {
-    type Item = Word<'a>;
+    type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
         let pos = self.find_sow();
@@ -19,7 +18,7 @@ impl<'a> Iterator for Words<'a> {
         let inner = &self.inner[..pos];
         self.inner = &self.inner[pos..];
 
-        Some(Word { inner })
+        Some(inner)
     }
 }
 
@@ -32,7 +31,7 @@ impl<'a> DoubleEndedIterator for Words<'a> {
         let inner = &self.inner[pos..];
         self.inner = &self.inner[..pos];
 
-        Some(Word { inner })
+        Some(inner)
     }
 }
 
@@ -168,18 +167,18 @@ mod test {
 
         let s = "吾輩/名詞\tは/助詞\t\t猫/名詞\t /補助記号";
         let mut words = Words::from(s);
-        assert_eq!(words.next(), Some(Word::from("吾輩/名詞")));
-        assert_eq!(words.next(), Some(Word::from("は/助詞")));
-        assert_eq!(words.next(), Some(Word::from("猫/名詞")));
-        assert_eq!(words.next(), Some(Word::from(" /補助記号")));
+        assert_eq!(words.next(), Some("吾輩/名詞"));
+        assert_eq!(words.next(), Some("は/助詞"));
+        assert_eq!(words.next(), Some("猫/名詞"));
+        assert_eq!(words.next(), Some(" /補助記号"));
         assert_eq!(words.next(), None);
 
         let s = "ab\t\\\t/補助記号\t\\/\\\t\t\\\\\\\t/\\\\\t";
         let mut words = Words::from(s);
-        assert_eq!(words.next(), Some(Word::from("ab")));
-        assert_eq!(words.next(), Some(Word::from("\\\t/補助記号")));
-        assert_eq!(words.next(), Some(Word::from("\\/\\\t")));
-        assert_eq!(words.next(), Some(Word::from("\\\\\\\t/\\\\")));
+        assert_eq!(words.next(), Some("ab"));
+        assert_eq!(words.next(), Some("\\\t/補助記号"));
+        assert_eq!(words.next(), Some("\\/\\\t"));
+        assert_eq!(words.next(), Some("\\\\\\\t/\\\\"));
         assert_eq!(words.next(), None);
     }
 
@@ -191,34 +190,34 @@ mod test {
 
         let s = "吾輩/名詞\tは/助詞\t\t猫/名詞\t /補助記号";
         let mut words = Words::from(s).rev();
-        assert_eq!(words.next(), Some(Word::from(" /補助記号")));
-        assert_eq!(words.next(), Some(Word::from("猫/名詞")));
-        assert_eq!(words.next(), Some(Word::from("は/助詞")));
-        assert_eq!(words.next(), Some(Word::from("吾輩/名詞")));
+        assert_eq!(words.next(), Some(" /補助記号"));
+        assert_eq!(words.next(), Some("猫/名詞"));
+        assert_eq!(words.next(), Some("は/助詞"));
+        assert_eq!(words.next(), Some("吾輩/名詞"));
         assert_eq!(words.next(), None);
 
         let s = "\t\tab\t\\\t/補助記号\t\\/\\\t\t\\\\\\\t/\\\\\t";
         let mut words = Words::from(s).rev();
-        assert_eq!(words.next(), Some(Word::from("\\\\\\\t/\\\\")));
-        assert_eq!(words.next(), Some(Word::from("\\/\\\t")));
-        assert_eq!(words.next(), Some(Word::from("\\\t/補助記号")));
-        assert_eq!(words.next(), Some(Word::from("ab")));
+        assert_eq!(words.next(), Some("\\\\\\\t/\\\\"));
+        assert_eq!(words.next(), Some("\\/\\\t"));
+        assert_eq!(words.next(), Some("\\\t/補助記号"));
+        assert_eq!(words.next(), Some("ab"));
         assert_eq!(words.next(), None);
 
         let s = "\ta";
         let mut words = Words::from(s).rev();
-        assert_eq!(words.next(), Some(Word::from("a")));
+        assert_eq!(words.next(), Some("a"));
         assert_eq!(words.next(), None);
 
         let s = "\\\ta";
         let mut words = Words::from(s).rev();
-        assert_eq!(words.next(), Some(Word::from("\\\ta")));
+        assert_eq!(words.next(), Some("\\\ta"));
         assert_eq!(words.next(), None);
 
         let s = "\\\\\ta";
         let mut words = Words::from(s).rev();
-        assert_eq!(words.next(), Some(Word::from("a")));
-        assert_eq!(words.next(), Some(Word::from("\\\\")));
+        assert_eq!(words.next(), Some("a"));
+        assert_eq!(words.next(), Some("\\\\"));
         assert_eq!(words.next(), None);
     }
 
@@ -226,10 +225,10 @@ mod test {
     fn test_words_mixed() {
         let s = "吾輩/名詞\tは/助詞\t\t猫/名詞\t /補助記号";
         let mut words = Words::from(s);
-        assert_eq!(words.next(), Some(Word::from("吾輩/名詞")));
-        assert_eq!(words.next_back(), Some(Word::from(" /補助記号")));
-        assert_eq!(words.next(), Some(Word::from("は/助詞")));
-        assert_eq!(words.next_back(), Some(Word::from("猫/名詞")));
+        assert_eq!(words.next(), Some("吾輩/名詞"));
+        assert_eq!(words.next_back(), Some(" /補助記号"));
+        assert_eq!(words.next(), Some("は/助詞"));
+        assert_eq!(words.next_back(), Some("猫/名詞"));
         assert_eq!(words.next(), None);
         assert_eq!(words.next_back(), None);
     }

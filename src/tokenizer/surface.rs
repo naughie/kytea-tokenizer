@@ -1,11 +1,14 @@
-use super::Word;
+use crate::kytea::{DELIM, ESCAPE};
+use crate::tokenizer::Tags;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Surface<'a>(pub &'a str);
 
 impl<'a> Surface<'a> {
     pub fn is_ascii_whitespace(self) -> bool {
-        Word::from(self.0).is_ascii_whitespace()
+        let inner = self.0.as_bytes();
+        !inner.is_empty() && inner[0].is_ascii_whitespace()
+            || inner[0] == ESCAPE && inner[1] == DELIM
     }
 
     #[inline]
@@ -51,5 +54,15 @@ impl std::ops::Deref for Surface<'_> {
     #[inline]
     fn deref(&self) -> &str {
         self.0
+    }
+}
+
+impl<'a> Tags<'a> for Surface<'a> {
+    fn from_tags<I: Iterator<Item = &'a str>>(tags: &mut I) -> Self {
+        if let Some(tag) = tags.next() {
+            Self(tag)
+        } else {
+            Self("")
+        }
     }
 }

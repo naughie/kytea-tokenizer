@@ -16,11 +16,10 @@ pub fn run_cmd(
         .stdin(File::open(in_path)?)
         .stdout(File::create(out_path)?)
         .output()
-        .map_err(Into::into)
         .map(|_| ())
 }
 
-fn kytea_command(model: Option<&str>) -> Command {
+pub fn kytea_command(model: Option<&str>) -> Command {
     let mut comm = Command::new("kytea");
     if let Some(model) = model {
         comm.args(&["-model", model]);
