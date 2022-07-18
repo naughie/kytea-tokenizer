@@ -1,4 +1,5 @@
 use crate::kytea::ESCAPE;
+use crate::kytea::TAG_DELIM;
 
 pub trait Tags<'a> {
     fn from_tags<I: Iterator<Item = &'a str>>(tags: &mut I) -> Self;
@@ -84,7 +85,7 @@ impl<'a> TagIterator<'a> {
     fn find_next_slash(self) -> usize {
         let mut prev_char = 0u8;
         for (i, &c) in self.inner.as_bytes().iter().enumerate() {
-            if c == b'/' && prev_char != ESCAPE {
+            if c == TAG_DELIM && prev_char != ESCAPE {
                 return i;
             }
 

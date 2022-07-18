@@ -3,9 +3,10 @@ use std::io::Result;
 use std::path::Path;
 use std::process::Command;
 
-pub(crate) const DELIM: u8 = b'\t';
+pub const DELIM: u8 = b'\t';
 pub(crate) const DELIM_STR: &str = "\t";
-pub(crate) const ESCAPE: u8 = b'\\';
+pub const ESCAPE: u8 = b'\\';
+pub const TAG_DELIM: u8 = b'/';
 
 pub fn run_cmd(
     in_path: impl AsRef<Path>,

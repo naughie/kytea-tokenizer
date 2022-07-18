@@ -165,6 +165,16 @@ mod test {
         let mut words = Words::from(s);
         assert_eq!(words.next(), None);
 
+        let s = "吾輩/名詞";
+        let mut words = Words::from(s);
+        assert_eq!(words.next(), Some("吾輩/名詞"));
+        assert_eq!(words.next(), None);
+
+        let s = "吾輩/名詞\t";
+        let mut words = Words::from(s);
+        assert_eq!(words.next(), Some("吾輩/名詞"));
+        assert_eq!(words.next(), None);
+
         let s = "吾輩/名詞\tは/助詞\t\t猫/名詞\t /補助記号";
         let mut words = Words::from(s);
         assert_eq!(words.next(), Some("吾輩/名詞"));
