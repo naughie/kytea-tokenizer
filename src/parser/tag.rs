@@ -1,20 +1,24 @@
-use crate::kytea::ESCAPE;
-use crate::kytea::TAG_DELIM;
+use crate::ESCAPE;
+use crate::TAG_DELIM;
 
 pub trait Tags<'a> {
     fn from_tags<I: Iterator<Item = &'a str>>(tags: &mut I) -> Self;
 }
 
 macro_rules! impl_tags {
-    ($($ty:ident),* $(,)?) => {
+    () => {
+        impl<'a> Tags<'a> for () {
+            fn from_tags<I: Iterator<Item = &'a str>>(_tags: &mut I) -> Self {}
+        }
+    };
+    ($($ty:ident),+ $(,)?) => {
         #[allow(non_snake_case)]
-        #[allow(unused_variables)]
-        impl<'a, $($ty: Tags<'a>,)*> Tags<'a> for ($($ty,)*) {
+        impl<'a, $($ty: Tags<'a>,)+> Tags<'a> for ($($ty,)+) {
             fn from_tags<I: Iterator<Item = &'a str>>(tags: &mut I) -> Self {
                 $(
                     let $ty = <$ty as Tags<'a>>::from_tags(tags);
-                )*
-                ($($ty,)*)
+                )+
+                ($($ty,)+)
             }
         }
     };

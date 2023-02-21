@@ -1,5 +1,5 @@
-use crate::kytea::{DELIM, ESCAPE};
-use crate::tokenizer::Tags;
+use crate::parser::Tags;
+use crate::{ESCAPE, WORD_DELIM as DELIM};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Surface<'a>(pub &'a str);

@@ -1,4 +1,4 @@
-use crate::tokenizer::Tags;
+use crate::parser::Tags;
 
 #[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};

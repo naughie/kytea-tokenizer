@@ -1,4 +1,4 @@
-use crate::kytea::{DELIM, ESCAPE};
+use crate::{ESCAPE, WORD_DELIM as DELIM};
 
 use std::num::NonZeroUsize;
 
