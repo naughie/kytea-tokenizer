@@ -37,6 +37,9 @@ pub struct Model {
     void_kytea: VoidPtr,
 }
 
+unsafe impl Send for Model {}
+unsafe impl Sync for Model {}
+
 impl Model {
     /// # Safety
     /// The provided slice **must** be nul-terminated and not contain any interior nul bytes.
@@ -58,7 +61,7 @@ impl Model {
         Ostream::new()
     }
 
-    pub fn tokenize_to_str(&self, input: &Istream, output: &mut Ostream) {
+    pub fn tokenize_to_str(&mut self, input: &Istream, output: &mut Ostream) {
         unsafe {
             match input {
                 Istream::File(input) => {
@@ -71,7 +74,7 @@ impl Model {
         }
     }
 
-    pub fn tokenize_to_file(&self, input: &Istream, output: &CStr) {
+    pub fn tokenize_to_file(&mut self, input: &Istream, output: &CStr) {
         unsafe {
             match input {
                 Istream::File(input) => {
@@ -95,6 +98,9 @@ pub enum Istream {
     File(*const c_char),
     Buf(VoidPtr),
 }
+
+unsafe impl Send for Istream {}
+unsafe impl Sync for Istream {}
 
 impl Istream {
     /// # Safety
@@ -141,6 +147,9 @@ impl Drop for Istream {
 pub struct Ostream {
     void_stream: VoidPtr,
 }
+
+unsafe impl Send for Ostream {}
+unsafe impl Sync for Ostream {}
 
 impl Default for Ostream {
     #[inline]
