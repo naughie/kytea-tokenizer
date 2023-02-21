@@ -1,6 +1,6 @@
 [package]
 name = "kytea-tokenizer"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2021"
 authors = ["Masato Nakata <masaton@naughie.com>"]
 description = "Wrapper of tokenization by KyTea"
@@ -10,7 +10,7 @@ documentation = "https://docs.rs/kytea-tokenizer"
 keywords = ["kytea", "japanese", "morphological", "analyzer"]
 categories = ["text-processing"]
 readme = "README.md"
-include = ["src/", "LICENSE-*", "README.md"]
+include = ["src/", "lib/", "LICENSE-*", "README.md"]
 
 
 [features]
