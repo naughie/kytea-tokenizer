@@ -70,5 +70,12 @@ mod test {
         assert_surface_and_pos(it.next(), "c", PoS::None);
         assert_surface_and_pos(it.next(), "e", PoS::UNK);
         assert!(it.next().is_none());
+
+        let mut it = WordIterator::<Surface>::from_lines(words);
+        assert_eq!(it.next(), Some(Surface("a")));
+        assert_eq!(it.next(), Some(Surface("b")));
+        assert_eq!(it.next(), Some(Surface("c")));
+        assert_eq!(it.next(), Some(Surface("e")));
+        assert!(it.next().is_none());
     }
 }
