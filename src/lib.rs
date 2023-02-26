@@ -25,3 +25,5 @@ pub use parser::DefaultTags;
 pub use parser::Surface;
 pub use parser::Tags;
 pub use parser::WordIterator;
+
+pub mod tokenizer;

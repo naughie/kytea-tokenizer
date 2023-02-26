@@ -25,6 +25,16 @@ impl<'a> Surface<'a> {
     pub const fn as_str(self) -> &'a str {
         self.0
     }
+
+    #[inline]
+    pub const fn len(self) -> usize {
+        self.0.len()
+    }
+
+    #[inline]
+    pub const fn is_empty(self) -> bool {
+        self.0.is_empty()
+    }
 }
 
 impl<'a, 'b> PartialEq<&'b str> for Surface<'a> {
