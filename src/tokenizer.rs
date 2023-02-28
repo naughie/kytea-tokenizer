@@ -107,3 +107,48 @@ impl Tokenizer for ParseOnly {
         stream.into()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[cfg(feature = "tantivy")]
+    fn token(offset_from: usize, offset_to: usize, position: usize, text: &str) -> Token {
+        Token {
+            offset_from,
+            offset_to,
+            position,
+            text: text.to_string(),
+            position_length: 1,
+        }
+    }
+    #[cfg(not(feature = "tantivy"))]
+    fn token(offset_from: usize, offset_to: usize, position: usize, text: &str) -> Token {
+        Token {
+            offset_from,
+            offset_to,
+            position,
+            text: text.to_string(),
+        }
+    }
+
+    #[test]
+    fn parse_only() {
+        let mut stream = TokenStreamParseOnly::from_tokenized_text("a");
+        assert!(stream.advance_token().is_continue());
+        assert_eq!(&stream.current_token, &token(0, 1, 0, "a"));
+        assert!(stream.advance_token().is_break());
+
+        let mut stream = TokenStreamParseOnly::from_tokenized_text("a/記号/Ａ");
+        assert!(stream.advance_token().is_continue());
+        assert_eq!(&stream.current_token, &token(0, 1, 0, "a"));
+        assert!(stream.advance_token().is_break());
+
+        let mut stream = TokenStreamParseOnly::from_tokenized_text("a/記号/Ａ\tb/記号/Ｂ");
+        assert!(stream.advance_token().is_continue());
+        assert_eq!(&stream.current_token, &token(0, 1, 0, "a"));
+        assert!(stream.advance_token().is_continue());
+        assert_eq!(&stream.current_token, &token(13, 14, 1, "b"));
+        assert!(stream.advance_token().is_break());
+    }
+}
