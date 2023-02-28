@@ -8,7 +8,9 @@ pub trait Tags<'a> {
 macro_rules! impl_tags {
     () => {
         impl<'a> Tags<'a> for () {
-            fn from_tags<I: Iterator<Item = &'a str>>(_tags: &mut I) -> Self {}
+            fn from_tags<I: Iterator<Item = &'a str>>(tags: &mut I) {
+                tags.next();
+            }
         }
     };
     ($($ty:ident),+ $(,)?) => {
@@ -133,22 +135,36 @@ mod test {
         use crate::PoS;
         use crate::Surface;
 
-        type Test<'a> = (Surface<'a>, PoS, String);
+        type Test1<'a> = (Surface<'a>, PoS, String);
 
         let mut tags = TagIterator::from("a/名詞");
-        let tags = Test::from_tags(&mut tags);
+        let tags = Test1::from_tags(&mut tags);
         assert_eq!(tags, (Surface("a"), PoS::名詞, String::new()));
 
         let mut tags = TagIterator::from("a/名詞/b");
-        let tags = Test::from_tags(&mut tags);
+        let tags = Test1::from_tags(&mut tags);
         assert_eq!(tags, (Surface("a"), PoS::名詞, String::from("b")));
 
         let mut tags = TagIterator::from("a/名詞/b/c");
-        let tags = Test::from_tags(&mut tags);
+        let tags = Test1::from_tags(&mut tags);
         assert_eq!(tags, (Surface("a"), PoS::名詞, String::from("b")));
 
         let mut tags = TagIterator::from("a//b/c");
-        let tags = Test::from_tags(&mut tags);
+        let tags = Test1::from_tags(&mut tags);
         assert_eq!(tags, (Surface("a"), PoS::None, String::from("b")));
+
+        type Test2 = ((), PoS);
+
+        let mut tags = TagIterator::from("/名詞");
+        let tags = Test2::from_tags(&mut tags);
+        assert_eq!(tags, ((), PoS::名詞));
+
+        let mut tags = TagIterator::from("a/名詞");
+        let tags = Test2::from_tags(&mut tags);
+        assert_eq!(tags, ((), PoS::名詞));
+
+        let mut tags = TagIterator::from("a/名詞/b/c");
+        let tags = Test2::from_tags(&mut tags);
+        assert_eq!(tags, ((), PoS::名詞));
     }
 }
