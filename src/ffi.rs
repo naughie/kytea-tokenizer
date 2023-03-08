@@ -94,26 +94,26 @@ impl Drop for Model {
     }
 }
 
-pub enum Istream {
-    File(*const c_char),
+pub enum Istream<'a> {
+    File(&'a c_char),
     Buf(VoidPtr),
 }
 
-unsafe impl Send for Istream {}
-unsafe impl Sync for Istream {}
+unsafe impl Send for Istream<'_> {}
+unsafe impl Sync for Istream<'_> {}
 
-impl Istream {
+impl<'a> Istream<'a> {
     /// # Safety
     /// The provided slice **must** be nul-terminated and not contain any interior nul bytes.
     ///
     /// See [`CStr::from_bytes_with_nul_unchecked()`] for details.
-    pub unsafe fn from_file_unchecked(fname: &[u8]) -> Self {
+    pub unsafe fn from_file_unchecked(fname: &'a [u8]) -> Self {
         let fname = CStr::from_bytes_with_nul_unchecked(fname);
         Self::from_file(fname)
     }
 
-    pub fn from_file(fname: &CStr) -> Self {
-        Self::File(fname.as_ptr())
+    pub fn from_file(fname: &'a CStr) -> Self {
+        Self::File(unsafe { &*fname.as_ptr() })
     }
 
     /// # Safety
@@ -134,7 +134,7 @@ impl Istream {
     }
 }
 
-impl Drop for Istream {
+impl Drop for Istream<'_> {
     fn drop(&mut self) {
         if let &mut Self::Buf(void_stream) = self {
             unsafe {
