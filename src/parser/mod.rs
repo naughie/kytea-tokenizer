@@ -28,6 +28,14 @@ impl<'a, T> WordIterator<'a, T> {
             phantom: PhantomData,
         }
     }
+
+    #[inline]
+    pub fn clone_with_tags<NewT: Tags<'a>>(&self) -> WordIterator<'a, NewT> {
+        WordIterator {
+            word_it: self.word_it.clone(),
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<'a, T: Tags<'a>> Iterator for WordIterator<'a, T> {
