@@ -1,4 +1,4 @@
-use crate::parser::{Surface, WordIterator};
+use crate::parser::{Surface, Tags, WordIterator};
 
 use std::iter::Enumerate;
 use std::iter::Filter;
@@ -53,46 +53,57 @@ fn set_token<'a>(token: &mut Token, i: usize, surface: Surface<'a>, orig: &'a st
     token.offset_to = offset_from + surface.len();
 }
 
-fn advance_token<'a, I>(it: &mut I, token: &mut Token, orig: &'a str) -> ControlFlow<()>
+fn advance_token<'a, I, T>(it: &mut I, token: &mut Token, orig: &'a str) -> ControlFlow<(), T>
 where
-    I: Iterator<Item = (usize, Surface<'a>)>,
+    I: Iterator<Item = (usize, (Surface<'a>, T))>,
+    T: Tags<'a>,
 {
-    if let Some((i, surface)) = it.next() {
+    if let Some((i, (surface, tags))) = it.next() {
         set_token(token, i, surface, orig);
-        ControlFlow::Continue(())
+        ControlFlow::Continue(tags)
     } else {
         ControlFlow::Break(())
     }
 }
 
-pub struct TokenStreamParseOnly<'a> {
+pub struct TokenStreamParseOnly<'a, T = ()> {
     original: &'a str,
-    tokenized_text: Enumerate<WordIterator<'a, Surface<'a>>>,
+    tokenized_text: Enumerate<WordIterator<'a, (Surface<'a>, T)>>,
+    pub tags: T,
     pub current_token: Token,
 }
 
-impl<'a> TokenStreamParseOnly<'a> {
+impl<'a> TokenStreamParseOnly<'a, ()> {
     #[inline]
     pub fn from_tokenized_text(tokenized_text: &'a str) -> Self {
         Self {
             original: tokenized_text,
             tokenized_text: WordIterator::from_lines(tokenized_text).enumerate(),
+            tags: (),
             current_token: Token::default(),
         }
     }
+}
 
+impl<'a, T: Tags<'a>> TokenStreamParseOnly<'a, T> {
     #[inline]
     pub fn advance_token(&mut self) -> ControlFlow<()> {
-        advance_token(
+        match advance_token(
             &mut self.tokenized_text,
             &mut self.current_token,
             self.original,
-        )
+        ) {
+            ControlFlow::Continue(tags) => {
+                self.tags = tags;
+                ControlFlow::Continue(())
+            }
+            ControlFlow::Break(()) => ControlFlow::Break(()),
+        }
     }
 }
 
 #[cfg(feature = "tantivy")]
-impl<'a> TokenStream for TokenStreamParseOnly<'a> {
+impl<'a, T: Tags<'a>> TokenStream for TokenStreamParseOnly<'a, T> {
     #[inline]
     fn advance(&mut self) -> bool {
         self.advance_token().is_continue()
@@ -121,41 +132,60 @@ impl Tokenizer for ParseOnly {
     }
 }
 
-pub struct TokenStreamParseWithFilter<'a, F> {
+pub struct TokenStreamParseWithFilter<'a, F, T = ()> {
     original: &'a str,
-    tokenized_text: Enumerate<Filter<WordIterator<'a, Surface<'a>>, F>>,
+    tokenized_text: Enumerate<Filter<WordIterator<'a, (Surface<'a>, T)>, F>>,
+    pub tags: T,
     pub current_token: Token,
 }
 
-impl<'a, F> TokenStreamParseWithFilter<'a, F>
+impl<'a, F> TokenStreamParseWithFilter<'a, F, ()>
 where
-    F: FnMut(&Surface<'a>) -> bool,
+    F: FnMut(&(Surface<'a>, ())) -> bool,
 {
     #[inline]
     pub fn from_tokenized_text(tokenized_text: &'a str, filter: F) -> Self {
+        Self::with_tags(tokenized_text, filter, ())
+    }
+}
+
+impl<'a, F, T> TokenStreamParseWithFilter<'a, F, T>
+where
+    F: FnMut(&(Surface<'a>, T)) -> bool,
+    T: Tags<'a>,
+{
+    #[inline]
+    pub fn with_tags(tokenized_text: &'a str, filter: F, tags: T) -> Self {
         Self {
             original: tokenized_text,
             tokenized_text: WordIterator::from_lines(tokenized_text)
                 .filter(filter)
                 .enumerate(),
+            tags,
             current_token: Token::default(),
         }
     }
-
     #[inline]
     pub fn advance_token(&mut self) -> ControlFlow<()> {
-        advance_token(
+        match advance_token(
             &mut self.tokenized_text,
             &mut self.current_token,
             self.original,
-        )
+        ) {
+            ControlFlow::Continue(tags) => {
+                self.tags = tags;
+                ControlFlow::Continue(())
+            }
+            ControlFlow::Break(()) => ControlFlow::Break(()),
+        }
     }
 }
 
 #[cfg(feature = "tantivy")]
-impl<'a, F> TokenStream for TokenStreamParseWithFilter<'a, F>
+impl<'a, F, T> TokenStream for TokenStreamParseWithFilter<'a, F, T>
 where
-    F: FnMut(&Surface<'a>) -> bool,
+    F: FnMut(&(Surface<'a>, T)) -> bool,
+    T: Tags<'a>,
 {
     #[inline]
     fn advance(&mut self) -> bool {
@@ -175,12 +205,12 @@ where
 
 #[cfg(feature = "tantivy")]
 #[derive(Debug, Clone)]
-pub struct ParseWithFilter<F: Clone + for<'a> FnMut(&Surface<'a>) -> bool>(F);
+pub struct ParseWithFilter<F: Clone + for<'a> FnMut(&(Surface<'a>, ())) -> bool>(F);
 
 #[cfg(feature = "tantivy")]
 impl<F> Tokenizer for ParseWithFilter<F>
 where
-    F: Clone + Send + Sync + for<'a> FnMut(&Surface<'a>) -> bool + 'static,
+    F: Clone + Send + Sync + for<'a> FnMut(&(Surface<'a>, ())) -> bool + 'static,
 {
     fn token_stream<'a>(&self, text: &'a str) -> BoxTokenStream<'a> {
         let stream = TokenStreamParseWithFilter::from_tokenized_text(text, self.0.clone());
