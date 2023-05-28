@@ -1,7 +1,5 @@
 use crate::parser::{Surface, Tags, WordIterator};
 
-use std::iter::Enumerate;
-use std::iter::Filter;
 use std::ops::ControlFlow;
 
 #[cfg(all(feature = "json", not(feature = "tantivy")))]
@@ -43,23 +41,35 @@ impl Default for Token {
     }
 }
 
-fn set_token<'a>(token: &mut Token, i: usize, surface: Surface<'a>, orig: &'a str) {
+fn set_token<'a>(
+    token: &mut Token,
+    i: usize,
+    surface: Surface<'a>,
+    orig: &'a str,
+    len_consumed: usize,
+) {
     token.text.clear();
     token.text.push_str(surface.as_str());
     token.position = i;
     // SAFETY: `orig` and `surface` are both parts of the same text, i.e. the `orig`.
     let offset_from = unsafe { surface.as_ptr().offset_from(orig.as_ptr()) } as usize;
     token.offset_from = offset_from;
-    token.offset_to = offset_from + surface.len();
+    token.offset_to = offset_from + len_consumed;
 }
 
-fn advance_token<'a, I, T>(it: &mut I, token: &mut Token, orig: &'a str) -> ControlFlow<(), T>
+fn advance_token<'a, T>(
+    it: &mut WordIterator<'a, (Surface<'a>, T)>,
+    count: &mut usize,
+    token: &mut Token,
+    orig: &'a str,
+) -> ControlFlow<(), T>
 where
-    I: Iterator<Item = (usize, (Surface<'a>, T))>,
     T: Tags<'a>,
 {
-    if let Some((i, (surface, tags))) = it.next() {
-        set_token(token, i, surface, orig);
+    if let Some((surface, tags)) = it.next() {
+        let i = *count;
+        *count += 1;
+        set_token(token, i, surface, orig, it.len_last_consumed);
         ControlFlow::Continue(tags)
     } else {
         ControlFlow::Break(())
@@ -68,7 +78,8 @@ where
 
 pub struct TokenStreamParseOnly<'a, T = ()> {
     original: &'a str,
-    tokenized_text: Enumerate<WordIterator<'a, (Surface<'a>, T)>>,
+    tokenized_text: WordIterator<'a, (Surface<'a>, T)>,
+    count: usize,
     pub tags: T,
     pub current_token: Token,
 }
@@ -78,7 +89,8 @@ impl<'a> TokenStreamParseOnly<'a, ()> {
     pub fn from_tokenized_text(tokenized_text: &'a str) -> Self {
         Self {
             original: tokenized_text,
-            tokenized_text: WordIterator::from_lines(tokenized_text).enumerate(),
+            tokenized_text: WordIterator::from_lines(tokenized_text),
+            count: 0,
             tags: (),
             current_token: Token::default(),
         }
@@ -90,6 +102,7 @@ impl<'a, T: Tags<'a>> TokenStreamParseOnly<'a, T> {
     pub fn advance_token(&mut self) -> ControlFlow<()> {
         match advance_token(
             &mut self.tokenized_text,
+            &mut self.count,
             &mut self.current_token,
             self.original,
         ) {
@@ -132,9 +145,36 @@ impl Tokenizer for ParseOnly {
     }
 }
 
+fn advance_token_filtered<'a, T, F>(
+    it: &mut WordIterator<'a, (Surface<'a>, T)>,
+    count: &mut usize,
+    predicate: &mut F,
+    token: &mut Token,
+    orig: &'a str,
+) -> ControlFlow<(), T>
+where
+    T: Tags<'a>,
+    F: FnMut(&(Surface<'a>, T)) -> bool,
+{
+    loop {
+        if let Some(item) = it.next() {
+            if predicate(&item) {
+                let i = *count;
+                *count += 1;
+                set_token(token, i, item.0, orig, it.len_last_consumed);
+                return ControlFlow::Continue(item.1);
+            }
+        } else {
+            return ControlFlow::Break(());
+        }
+    }
+}
+
 pub struct TokenStreamParseWithFilter<'a, F, T = ()> {
     original: &'a str,
-    tokenized_text: Enumerate<Filter<WordIterator<'a, (Surface<'a>, T)>, F>>,
+    tokenized_text: WordIterator<'a, (Surface<'a>, T)>,
+    count: usize,
+    predicate: F,
     pub tags: T,
     pub current_token: Token,
 }
@@ -158,17 +198,19 @@ where
     pub fn with_tags(tokenized_text: &'a str, filter: F, tags: T) -> Self {
         Self {
             original: tokenized_text,
-            tokenized_text: WordIterator::from_lines(tokenized_text)
-                .filter(filter)
-                .enumerate(),
+            tokenized_text: WordIterator::from_lines(tokenized_text),
+            count: 0,
+            predicate: filter,
             tags,
             current_token: Token::default(),
         }
     }
     #[inline]
     pub fn advance_token(&mut self) -> ControlFlow<()> {
-        match advance_token(
+        match advance_token_filtered(
             &mut self.tokenized_text,
+            &mut self.count,
+            &mut self.predicate,
             &mut self.current_token,
             self.original,
         ) {
@@ -251,14 +293,14 @@ mod test {
 
         let mut stream = TokenStreamParseOnly::from_tokenized_text("a/記号/Ａ");
         assert!(stream.advance_token().is_continue());
-        assert_eq!(&stream.current_token, &token(0, 1, 0, "a"));
+        assert_eq!(&stream.current_token, &token(0, 12, 0, "a"));
         assert!(stream.advance_token().is_break());
 
         let mut stream = TokenStreamParseOnly::from_tokenized_text("a/記号/Ａ\tb/記号/Ｂ");
         assert!(stream.advance_token().is_continue());
-        assert_eq!(&stream.current_token, &token(0, 1, 0, "a"));
+        assert_eq!(&stream.current_token, &token(0, 12, 0, "a"));
         assert!(stream.advance_token().is_continue());
-        assert_eq!(&stream.current_token, &token(13, 14, 1, "b"));
+        assert_eq!(&stream.current_token, &token(13, 25, 1, "b"));
         assert!(stream.advance_token().is_break());
     }
 }
